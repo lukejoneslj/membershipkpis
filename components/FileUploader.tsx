@@ -73,7 +73,7 @@ export function FileUploader({ onFilesUploaded }: FileUploaderProps) {
             ) : (
               <FileText className="w-4 h-4" />
             )}
-            Account Data (all accountsw.csv)
+            Account Data
           </label>
           <div className="flex gap-2">
             <input
@@ -98,7 +98,7 @@ export function FileUploader({ onFilesUploaded }: FileUploaderProps) {
             ) : (
               <FileText className="w-4 h-4" />
             )}
-            Financial Data (updatedfinancial.csv)
+            Financial Data
           </label>
           <div className="flex gap-2">
             <input
@@ -123,7 +123,7 @@ export function FileUploader({ onFilesUploaded }: FileUploaderProps) {
             ) : (
               <FileText className="w-4 h-4" />
             )}
-            Jotform Data (jotformemails.csv)
+            Jotform Data
           </label>
           <div className="flex gap-2">
             <input
