@@ -21,7 +21,7 @@ import {
   Mail,
 } from 'lucide-react';
 import type { AnalysisResult } from '@/lib/types';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart } from 'recharts';
 import { FunnelChart } from './FunnelChart';
 
 interface DashboardProps {
@@ -36,6 +36,7 @@ export function Dashboard({ analysis }: DashboardProps) {
     month: item.month,
     transactions: item.transactions,
     users: item.uniqueUsers,
+    canceled: item.canceledUsers,
   }));
 
   const pipelineChartData = [
@@ -47,25 +48,25 @@ export function Dashboard({ analysis }: DashboardProps) {
 
   // Funnel chart data for free trial period (Aug 6, 2025 onward)
   const freeTrialFunnelData = [
-    { 
-      name: 'Quiz Takers (Since Aug 6)', 
+    {
+      name: 'Quiz Takers (Since Aug 6)',
       value: analysis.jotformPipeline.uniqueEmailsSinceFreeTrial,
-      color: '#3b82f6' 
+      color: '#3b82f6'
     },
-    { 
-      name: 'Became Members', 
+    {
+      name: 'Became Members',
       value: analysis.jotformPipeline.convertedSinceFreeTrial,
-      color: '#8b5cf6' 
+      color: '#8b5cf6'
     },
-    { 
-      name: 'Used Free Trial', 
+    {
+      name: 'Used Free Trial',
       value: analysis.jotformPipeline.freeTrialUsers,
-      color: '#f59e0b' 
+      color: '#f59e0b'
     },
-    { 
-      name: 'Still Active', 
+    {
+      name: 'Still Active',
       value: analysis.jotformPipeline.freeTrialActive,
-      color: '#10b981' 
+      color: '#10b981'
     },
   ];
 
@@ -95,7 +96,7 @@ export function Dashboard({ analysis }: DashboardProps) {
           <CheckCircle className="h-4 w-4" />
           <AlertTitle>Conversion Rate</AlertTitle>
           <AlertDescription>
-            {analysis.jotformPipeline.conversionRate.toFixed(1)}% of quiz takers become members. 
+            {analysis.jotformPipeline.conversionRate.toFixed(1)}% of quiz takers become members.
             {analysis.jotformPipeline.conversionRate < 5 && ' Consider optimizing your quiz-to-member funnel.'}
           </AlertDescription>
         </Alert>
@@ -244,7 +245,7 @@ export function Dashboard({ analysis }: DashboardProps) {
             <Calendar className="h-4 w-4" />
             <AlertTitle>Free Trial Period Analysis</AlertTitle>
             <AlertDescription>
-              Free trial metrics only include quiz submissions from <strong>August 6, 2025</strong> onward, 
+              Free trial metrics only include quiz submissions from <strong>August 6, 2025</strong> onward,
               when the free trial offer was launched. Overall quiz metrics include all submissions.
             </AlertDescription>
           </Alert>
@@ -353,7 +354,7 @@ export function Dashboard({ analysis }: DashboardProps) {
                     <h3 className="font-semibold text-lg">Before Aug 6, 2025</h3>
                     <Badge variant="outline">No Free Trial</Badge>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div>
                       <div className="flex justify-between text-sm mb-1">
@@ -361,9 +362,9 @@ export function Dashboard({ analysis }: DashboardProps) {
                         <span className="font-semibold">{analysis.jotformPipeline.uniqueEmailsBeforeFreeTrial.toLocaleString()}</span>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-muted-foreground">Gross Members</span>
@@ -376,9 +377,9 @@ export function Dashboard({ analysis }: DashboardProps) {
                         </Badge>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-muted-foreground">Canceled</span>
@@ -393,9 +394,9 @@ export function Dashboard({ analysis }: DashboardProps) {
                         </Badge>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div className="bg-muted p-3 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="font-semibold">Net Members</span>
@@ -419,7 +420,7 @@ export function Dashboard({ analysis }: DashboardProps) {
                     <h3 className="font-semibold text-lg">Since Aug 6, 2025</h3>
                     <Badge>With Free Trial</Badge>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div>
                       <div className="flex justify-between text-sm mb-1">
@@ -427,9 +428,9 @@ export function Dashboard({ analysis }: DashboardProps) {
                         <span className="font-semibold">{analysis.jotformPipeline.uniqueEmailsSinceFreeTrial.toLocaleString()}</span>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-muted-foreground">Gross Members</span>
@@ -451,9 +452,9 @@ export function Dashboard({ analysis }: DashboardProps) {
                         </Badge>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-muted-foreground">Canceled</span>
@@ -468,9 +469,9 @@ export function Dashboard({ analysis }: DashboardProps) {
                         </Badge>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div className="bg-muted p-3 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="font-semibold">Net Members</span>
@@ -504,11 +505,10 @@ export function Dashboard({ analysis }: DashboardProps) {
                       ) : (
                         <TrendingDown className="w-4 h-4 text-red-600" />
                       )}
-                      <span className={`font-bold ${
-                        analysis.jotformPipeline.conversionRateSinceFreeTrial > analysis.jotformPipeline.conversionRateBeforeFreeTrial 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
+                      <span className={`font-bold ${analysis.jotformPipeline.conversionRateSinceFreeTrial > analysis.jotformPipeline.conversionRateBeforeFreeTrial
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                        }`}>
                         {(analysis.jotformPipeline.conversionRateSinceFreeTrial - analysis.jotformPipeline.conversionRateBeforeFreeTrial).toFixed(1)}%
                       </span>
                     </div>
@@ -521,11 +521,10 @@ export function Dashboard({ analysis }: DashboardProps) {
                       ) : (
                         <TrendingDown className="w-4 h-4 text-red-600" />
                       )}
-                      <span className={`font-bold ${
-                        analysis.jotformPipeline.netConversionRateSinceFreeTrial > analysis.jotformPipeline.netConversionRateBeforeFreeTrial 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
+                      <span className={`font-bold ${analysis.jotformPipeline.netConversionRateSinceFreeTrial > analysis.jotformPipeline.netConversionRateBeforeFreeTrial
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                        }`}>
                         {(analysis.jotformPipeline.netConversionRateSinceFreeTrial - analysis.jotformPipeline.netConversionRateBeforeFreeTrial).toFixed(1)}%
                       </span>
                     </div>
@@ -538,11 +537,10 @@ export function Dashboard({ analysis }: DashboardProps) {
                       ) : (
                         <TrendingUp className="w-4 h-4 text-red-600" />
                       )}
-                      <span className={`font-bold ${
-                        analysis.jotformPipeline.cancellationRateSinceFreeTrial < analysis.jotformPipeline.cancellationRateBeforeFreeTrial 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
+                      <span className={`font-bold ${analysis.jotformPipeline.cancellationRateSinceFreeTrial < analysis.jotformPipeline.cancellationRateBeforeFreeTrial
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                        }`}>
                         {(analysis.jotformPipeline.cancellationRateSinceFreeTrial - analysis.jotformPipeline.cancellationRateBeforeFreeTrial).toFixed(1)}%
                       </span>
                     </div>
@@ -552,8 +550,35 @@ export function Dashboard({ analysis }: DashboardProps) {
             </CardContent>
           </Card>
 
+          {/* Monthly Conversion Trend */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Conversion Trend</CardTitle>
+              <CardDescription>
+                Submissions, Conversions, and Conversion Rate by Month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={analysis.jotformPipeline.monthlyBreakdown}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" unit="%" />
+                    <Tooltip />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="submissions" fill="#94a3b8" name="Submissions" barSize={20} />
+                    <Bar yAxisId="left" dataKey="conversions" fill="#8b5cf6" name="New Members" barSize={20} />
+                    <Line yAxisId="right" type="monotone" dataKey="conversionRate" stroke="#10b981" name="Conversion Rate" strokeWidth={2} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Pipeline Funnel Chart */}
-          <FunnelChart 
+          <FunnelChart
             data={freeTrialFunnelData}
             title="Free Trial Conversion Funnel"
             description="Journey from quiz submission to active member (Aug 6, 2025 onwards)"
@@ -659,6 +684,62 @@ export function Dashboard({ analysis }: DashboardProps) {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+
+          {/* Monthly Cancellations Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Free Trial Cancellations</CardTitle>
+              <CardDescription>Number of users from each month who have canceled</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={monthlyChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="canceled" fill="#ef4444" name="Canceled Users" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Detailed Data Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Breakdown Data</CardTitle>
+              <CardDescription>Detailed view of monthly trial usage and cancellations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="relative overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs uppercase bg-muted">
+                    <tr>
+                      <th className="px-6 py-3">Month</th>
+                      <th className="px-6 py-3">Transactions</th>
+                      <th className="px-6 py-3">Unique Users</th>
+                      <th className="px-6 py-3">Canceled Users</th>
+                      <th className="px-6 py-3">Cancel Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthlyChartData.map((row) => (
+                      <tr key={row.month} className="border-b">
+                        <td className="px-6 py-4 font-medium">{row.month}</td>
+                        <td className="px-6 py-4">{row.transactions}</td>
+                        <td className="px-6 py-4">{row.users}</td>
+                        <td className="px-6 py-4 text-red-600 font-bold">{row.canceled}</td>
+                        <td className="px-6 py-4">
+                          {row.users > 0 ? ((row.canceled / row.users) * 100).toFixed(1) : '0.0'}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Insights Tab */}
@@ -707,7 +788,7 @@ export function Dashboard({ analysis }: DashboardProps) {
                   Free Trial Strategy
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {analysis.jotformPipeline.freeTrialRate.toFixed(1)}% of Jotform members use the free trial. 
+                  {analysis.jotformPipeline.freeTrialRate.toFixed(1)}% of Jotform members use the free trial.
                   {analysis.jotformPipeline.freeTrialRate < 30 ? (
                     <> This is relatively low - consider promoting the free trial more prominently in your marketing.</>
                   ) : (
@@ -764,7 +845,7 @@ export function Dashboard({ analysis }: DashboardProps) {
                   <Alert>
                     <AlertTitle>Priority 1: Improve Free Trial Retention</AlertTitle>
                     <AlertDescription>
-                      Focus on reducing the {analysis.jotformPipeline.freeTrialCancellationRate.toFixed(1)}% cancellation rate 
+                      Focus on reducing the {analysis.jotformPipeline.freeTrialCancellationRate.toFixed(1)}% cancellation rate
                       by implementing better onboarding and value demonstration during the trial period.
                     </AlertDescription>
                   </Alert>

@@ -7,6 +7,7 @@ export async function parseCSVFile<T>(file: File): Promise<T[]> {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (header) => header.trim(),
       complete: (results) => {
         resolve(results.data as T[]);
       },
@@ -32,13 +33,13 @@ export function analyzeData(
   const freePromoTransactions = financialData.filter(
     txn => txn['Discount Code']?.toLowerCase().trim() === 'free'
   );
-  
+
   const freePromoAccountIds = new Set(
     freePromoTransactions
       .map(txn => txn['Account ID']?.trim())
       .filter(id => id)
   );
-  
+
   // Calculate date range and usage patterns
   const transactionDates = freePromoTransactions
     .map(txn => {
@@ -50,36 +51,36 @@ export function analyzeData(
     })
     .filter((date): date is Date => date !== null)
     .sort((a, b) => a.getTime() - b.getTime());
-  
-  const firstUsage = transactionDates.length > 0 
-    ? transactionDates[0].toISOString().split('T')[0] 
+
+  const firstUsage = transactionDates.length > 0
+    ? transactionDates[0].toISOString().split('T')[0]
     : '';
-  const lastUsage = transactionDates.length > 0 
-    ? transactionDates[transactionDates.length - 1].toISOString().split('T')[0] 
+  const lastUsage = transactionDates.length > 0
+    ? transactionDates[transactionDates.length - 1].toISOString().split('T')[0]
     : '';
-  
+
   const usagePeriodDays = transactionDates.length >= 2
     ? differenceInDays(transactionDates[transactionDates.length - 1], transactionDates[0]) + 1
     : 0;
-  
-  const avgTransactionsPerDay = usagePeriodDays > 0 
-    ? freePromoTransactions.length / usagePeriodDays 
+
+  const avgTransactionsPerDay = usagePeriodDays > 0
+    ? freePromoTransactions.length / usagePeriodDays
     : 0;
-  const avgUsersPerDay = usagePeriodDays > 0 
-    ? freePromoAccountIds.size / usagePeriodDays 
+  const avgUsersPerDay = usagePeriodDays > 0
+    ? freePromoAccountIds.size / usagePeriodDays
     : 0;
-  
+
   // Monthly breakdown
   const monthlyData = new Map<string, { transactions: number; users: Set<string> }>();
   freePromoTransactions.forEach(txn => {
     try {
       const date = parse(txn.Date, 'MMM d, yyyy', new Date());
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
+
       if (!monthlyData.has(monthKey)) {
         monthlyData.set(monthKey, { transactions: 0, users: new Set() });
       }
-      
+
       const data = monthlyData.get(monthKey)!;
       data.transactions++;
       if (txn['Account ID']?.trim()) {
@@ -89,24 +90,33 @@ export function analyzeData(
       // Skip invalid dates
     }
   });
-  
+
   const monthlyBreakdown = Array.from(monthlyData.entries())
-    .map(([month, data]) => ({
-      month,
-      transactions: data.transactions,
-      uniqueUsers: data.users.size,
-    }))
+    .map(([month, data]) => {
+      // Calculate how many users from this month's cohort have canceled
+      const canceledUsersCount = Array.from(data.users).filter(userId => {
+        const account = accountsData.find(acc => acc['Account ID']?.trim() === userId);
+        return account?.Cancel?.trim() === 'Cancel';
+      }).length;
+
+      return {
+        month,
+        transactions: data.transactions,
+        uniqueUsers: data.users.size,
+        canceledUsers: canceledUsersCount,
+      };
+    })
     .sort((a, b) => a.month.localeCompare(b.month));
-  
+
   // Check cancellation status for free promo users
   const freePromoCanceled = accountsData.filter(
     acc => freePromoAccountIds.has(acc['Account ID']?.trim()) && acc.Cancel?.trim() === 'Cancel'
   ).length;
   const freePromoActive = freePromoAccountIds.size - freePromoCanceled;
-  const freePromoCancellationRate = freePromoAccountIds.size > 0 
-    ? (freePromoCanceled / freePromoAccountIds.size) * 100 
+  const freePromoCancellationRate = freePromoAccountIds.size > 0
+    ? (freePromoCanceled / freePromoAccountIds.size) * 100
     : 0;
-  
+
   // Jotform Pipeline Analysis
   const totalJotformSubmissions = jotformData.length;
   const jotformEmails = new Set(
@@ -114,12 +124,12 @@ export function analyzeData(
       .map(rec => rec['Please enter your email to see your results.']?.toLowerCase().trim())
       .filter(email => email)
   );
-  
+
   const duplicateJotformSubmissions = totalJotformSubmissions - jotformEmails.size;
-  
+
   // Filter Jotform submissions from August 6, 2025 onward (when free trial was offered)
   const freeTrialStartDate = new Date('2025-08-06');
-  
+
   const jotformDataBeforeFreeTrial = jotformData.filter(rec => {
     try {
       const submissionDate = parse(rec['Submission Date'], 'MMM d, yyyy', new Date());
@@ -128,7 +138,7 @@ export function analyzeData(
       return false;
     }
   });
-  
+
   const jotformDataSinceFreeTrial = jotformData.filter(rec => {
     try {
       const submissionDate = parse(rec['Submission Date'], 'MMM d, yyyy', new Date());
@@ -137,19 +147,19 @@ export function analyzeData(
       return false;
     }
   });
-  
+
   const jotformEmailsBeforeFreeTrial = new Set(
     jotformDataBeforeFreeTrial
       .map(rec => rec['Please enter your email to see your results.']?.toLowerCase().trim())
       .filter(email => email)
   );
-  
+
   const jotformEmailsSinceFreeTrial = new Set(
     jotformDataSinceFreeTrial
       .map(rec => rec['Please enter your email to see your results.']?.toLowerCase().trim())
       .filter(email => email)
   );
-  
+
   // Match with members
   const memberEmails = new Map<string, string>();
   accountsData.forEach(acc => {
@@ -159,7 +169,7 @@ export function analyzeData(
       memberEmails.set(email, accountId);
     }
   });
-  
+
   const jotformMemberAccountIds = new Set<string>();
   jotformEmails.forEach(email => {
     const accountId = memberEmails.get(email);
@@ -167,7 +177,7 @@ export function analyzeData(
       jotformMemberAccountIds.add(accountId);
     }
   });
-  
+
   // Jotform members from BEFORE free trial period
   const jotformMemberAccountIdsBeforeFreeTrial = new Set<string>();
   jotformEmailsBeforeFreeTrial.forEach(email => {
@@ -176,7 +186,7 @@ export function analyzeData(
       jotformMemberAccountIdsBeforeFreeTrial.add(accountId);
     }
   });
-  
+
   // Jotform members from free trial period
   const jotformMemberAccountIdsSinceFreeTrial = new Set<string>();
   jotformEmailsSinceFreeTrial.forEach(email => {
@@ -185,12 +195,12 @@ export function analyzeData(
       jotformMemberAccountIdsSinceFreeTrial.add(accountId);
     }
   });
-  
+
   const convertedToMembers = jotformMemberAccountIds.size;
   const convertedBeforeFreeTrial = jotformMemberAccountIdsBeforeFreeTrial.size;
   const convertedToMembersSinceFreeTrial = jotformMemberAccountIdsSinceFreeTrial.size;
-  const conversionRate = jotformEmails.size > 0 
-    ? (convertedToMembers / jotformEmails.size) * 100 
+  const conversionRate = jotformEmails.size > 0
+    ? (convertedToMembers / jotformEmails.size) * 100
     : 0;
   const conversionRateBeforeFreeTrial = jotformEmailsBeforeFreeTrial.size > 0
     ? (convertedBeforeFreeTrial / jotformEmailsBeforeFreeTrial.size) * 100
@@ -198,11 +208,11 @@ export function analyzeData(
   const conversionRateSinceFreeTrial = jotformEmailsSinceFreeTrial.size > 0
     ? (convertedToMembersSinceFreeTrial / jotformEmailsSinceFreeTrial.size) * 100
     : 0;
-  
+
   // Calculate gross vs net for before free trial
   const canceledBeforeFreeTrial = accountsData.filter(
-    acc => Array.from(jotformMemberAccountIdsBeforeFreeTrial).includes(acc['Account ID']?.trim()) && 
-           acc.Cancel?.trim() === 'Cancel'
+    acc => Array.from(jotformMemberAccountIdsBeforeFreeTrial).includes(acc['Account ID']?.trim()) &&
+      acc.Cancel?.trim() === 'Cancel'
   ).length;
   const activeBeforeFreeTrial = convertedBeforeFreeTrial - canceledBeforeFreeTrial;
   const cancellationRateBeforeFreeTrial = convertedBeforeFreeTrial > 0
@@ -211,30 +221,30 @@ export function analyzeData(
   const netConversionRateBeforeFreeTrial = jotformEmailsBeforeFreeTrial.size > 0
     ? (activeBeforeFreeTrial / jotformEmailsBeforeFreeTrial.size) * 100
     : 0;
-  
+
   // Find Jotform members who used free trial (only from free trial period)
-  const jotformFreeTrialUsers = Array.from(jotformMemberAccountIdsSinceFreeTrial).filter(id => 
+  const jotformFreeTrialUsers = Array.from(jotformMemberAccountIdsSinceFreeTrial).filter(id =>
     freePromoAccountIds.has(id)
   );
   const jotformPaidUsers = convertedToMembersSinceFreeTrial - jotformFreeTrialUsers.length;
-  const freeTrialRate = convertedToMembersSinceFreeTrial > 0 
-    ? (jotformFreeTrialUsers.length / convertedToMembersSinceFreeTrial) * 100 
+  const freeTrialRate = convertedToMembersSinceFreeTrial > 0
+    ? (jotformFreeTrialUsers.length / convertedToMembersSinceFreeTrial) * 100
     : 0;
-  
+
   // Check cancellation for Jotform free trial users
   const jotformFreeTrialCanceled = accountsData.filter(
-    acc => jotformFreeTrialUsers.includes(acc['Account ID']?.trim()) && 
-           acc.Cancel?.trim() === 'Cancel'
+    acc => jotformFreeTrialUsers.includes(acc['Account ID']?.trim()) &&
+      acc.Cancel?.trim() === 'Cancel'
   ).length;
   const jotformFreeTrialActive = jotformFreeTrialUsers.length - jotformFreeTrialCanceled;
-  const jotformFreeTrialCancellationRate = jotformFreeTrialUsers.length > 0 
-    ? (jotformFreeTrialCanceled / jotformFreeTrialUsers.length) * 100 
+  const jotformFreeTrialCancellationRate = jotformFreeTrialUsers.length > 0
+    ? (jotformFreeTrialCanceled / jotformFreeTrialUsers.length) * 100
     : 0;
-  
+
   // Calculate gross vs net for SINCE free trial (all conversions, not just free trial users)
   const canceledSinceFreeTrial = accountsData.filter(
-    acc => Array.from(jotformMemberAccountIdsSinceFreeTrial).includes(acc['Account ID']?.trim()) && 
-           acc.Cancel?.trim() === 'Cancel'
+    acc => Array.from(jotformMemberAccountIdsSinceFreeTrial).includes(acc['Account ID']?.trim()) &&
+      acc.Cancel?.trim() === 'Cancel'
   ).length;
   const activeSinceFreeTrial = convertedToMembersSinceFreeTrial - canceledSinceFreeTrial;
   const cancellationRateSinceFreeTrial = convertedToMembersSinceFreeTrial > 0
@@ -243,13 +253,56 @@ export function analyzeData(
   const netConversionRateSinceFreeTrial = jotformEmailsSinceFreeTrial.size > 0
     ? (activeSinceFreeTrial / jotformEmailsSinceFreeTrial.size) * 100
     : 0;
-  
+
+  // Monthly Breakdown of Jotform Conversions
+  const monthlyJotformData = new Map<string, { submissions: number; emails: Set<string>; conversions: number }>();
+
+  // Use all jotformData for the monthly breakdown
+  jotformData.forEach(rec => {
+    try {
+      const date = parse(rec['Submission Date'], 'MMM d, yyyy', new Date());
+      // format as YYYY-MM
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      if (!monthlyJotformData.has(monthKey)) {
+        monthlyJotformData.set(monthKey, { submissions: 0, emails: new Set(), conversions: 0 });
+      }
+
+      const data = monthlyJotformData.get(monthKey)!;
+      data.submissions++;
+
+      const email = rec['Please enter your email to see your results.']?.toLowerCase().trim();
+      if (email) {
+        // If this is a new unique email for this month
+        if (!data.emails.has(email)) {
+          data.emails.add(email);
+          // Check if this email converted (became a member)
+          if (memberEmails.has(email)) {
+            data.conversions++;
+          }
+        }
+      }
+    } catch {
+      // Skip invalid dates
+    }
+  });
+
+  const jotformMonthlyBreakdown = Array.from(monthlyJotformData.entries())
+    .map(([month, data]) => ({
+      month,
+      submissions: data.submissions,
+      uniqueEmails: data.emails.size,
+      conversions: data.conversions,
+      conversionRate: data.emails.size > 0 ? (data.conversions / data.emails.size) * 100 : 0
+    }))
+    .filter(item => item.month >= '2025-04')
+    .sort((a, b) => a.month.localeCompare(b.month));
   return {
     totalMembers,
     activeMembers,
     canceledMembers,
     cancellationRate,
-    
+
     freePromoStats: {
       totalTransactions: freePromoTransactions.length,
       uniqueUsers: freePromoAccountIds.size,
@@ -263,7 +316,7 @@ export function analyzeData(
       lastUsage,
       monthlyBreakdown,
     },
-    
+
     jotformPipeline: {
       totalSubmissions: totalJotformSubmissions,
       uniqueEmails: jotformEmails.size,
@@ -295,8 +348,9 @@ export function analyzeData(
       freeTrialCanceled: jotformFreeTrialCanceled,
       freeTrialActive: jotformFreeTrialActive,
       freeTrialCancellationRate: jotformFreeTrialCancellationRate,
+      monthlyBreakdown: jotformMonthlyBreakdown,
     },
-    
+
     memberSources: {
       fromJotform: convertedToMembers,
       notFromJotform: totalMembers - convertedToMembers,

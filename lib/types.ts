@@ -34,7 +34,7 @@ export interface AnalysisResult {
   activeMembers: number;
   canceledMembers: number;
   cancellationRate: number;
-  
+
   // Free Promo Analysis
   freePromoStats: {
     totalTransactions: number;
@@ -51,9 +51,10 @@ export interface AnalysisResult {
       month: string;
       transactions: number;
       uniqueUsers: number;
+      canceledUsers: number;
     }>;
   };
-  
+
   // Jotform Pipeline
   jotformPipeline: {
     totalSubmissions: number;
@@ -86,8 +87,15 @@ export interface AnalysisResult {
     freeTrialCanceled: number;
     freeTrialActive: number;
     freeTrialCancellationRate: number;
+    monthlyBreakdown: Array<{
+      month: string;
+      submissions: number;
+      uniqueEmails: number;
+      conversions: number;
+      conversionRate: number;
+    }>;
   };
-  
+
   // Member Sources
   memberSources: {
     fromJotform: number;
