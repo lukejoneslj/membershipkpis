@@ -745,15 +745,6 @@ export function Dashboard({ analysis }: DashboardProps) {
 
         {/* Onboarding Tab */}
         <TabsContent value="onboarding" className="space-y-4">
-          <Alert>
-            <Mail className="h-4 w-4" />
-            <AlertTitle>Onboarding Email Sequence — Public Free-Trial Members ($5.50/mo)</AlertTitle>
-            <AlertDescription>
-              On <strong>February 18, 2026</strong>, a new onboarding email sequence launched targeting
-              ATNS Public members who joined via the <strong>free trial</strong>. This tab compares
-              cancellation rates for that specific cohort before vs. after the onboarding emails started.
-            </AlertDescription>
-          </Alert>
 
           {/* Before vs After KPI Cards */}
           <div className="grid gap-4 md:grid-cols-3">
