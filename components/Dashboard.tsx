@@ -112,10 +112,11 @@ export function Dashboard({ analysis }: DashboardProps) {
 
       {/* Main Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="pipeline">Jotform Pipeline</TabsTrigger>
           <TabsTrigger value="free-trial">Free Trial</TabsTrigger>
+          <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
         </TabsList>
 
@@ -732,6 +733,247 @@ export function Dashboard({ analysis }: DashboardProps) {
                         <td className="px-6 py-4 text-red-600 font-bold">{row.canceled}</td>
                         <td className="px-6 py-4">
                           {row.users > 0 ? ((row.canceled / row.users) * 100).toFixed(1) : '0.0'}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Onboarding Tab */}
+        <TabsContent value="onboarding" className="space-y-4">
+          <Alert>
+            <Mail className="h-4 w-4" />
+            <AlertTitle>Onboarding Email Sequence — Public Members ($5.50/mo)</AlertTitle>
+            <AlertDescription>
+              On <strong>February 18, 2026</strong>, a new onboarding email sequence launched for
+              ATNS Public members. This tab compares cancellation rates for public members who joined
+              before vs. after that date to measure its effectiveness.
+            </AlertDescription>
+          </Alert>
+
+          {/* Before vs After KPI Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            {/* Before */}
+            <Card className="border-l-4 border-l-slate-400">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Before Feb 18, 2026</CardTitle>
+                <CardDescription>No onboarding emails</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Joined</span>
+                  <span className="font-bold">{analysis.onboardingAnalysis.before.total.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Still Active</span>
+                  <span className="font-bold text-green-600">{analysis.onboardingAnalysis.before.active}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Canceled</span>
+                  <span className="font-bold text-red-600">{analysis.onboardingAnalysis.before.canceled}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold">Cancel Rate</span>
+                  <Badge variant={analysis.onboardingAnalysis.before.cancellationRate > 30 ? 'destructive' : 'secondary'}>
+                    {analysis.onboardingAnalysis.before.cancellationRate.toFixed(1)}%
+                  </Badge>
+                </div>
+                <Progress value={100 - analysis.onboardingAnalysis.before.cancellationRate} className="mt-1" />
+                <p className="text-xs text-muted-foreground text-right">
+                  {(100 - analysis.onboardingAnalysis.before.cancellationRate).toFixed(1)}% retention
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* After */}
+            <Card className="border-l-4 border-l-emerald-500">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Since Feb 18, 2026</CardTitle>
+                <CardDescription>With onboarding emails ✉️</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm">Total Joined</span>
+                  <span className="font-bold">{analysis.onboardingAnalysis.after.total.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Still Active</span>
+                  <span className="font-bold text-green-600">{analysis.onboardingAnalysis.after.active}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Canceled</span>
+                  <span className="font-bold text-red-600">{analysis.onboardingAnalysis.after.canceled}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold">Cancel Rate</span>
+                  <Badge variant={analysis.onboardingAnalysis.after.cancellationRate > 30 ? 'destructive' : 'default'}>
+                    {analysis.onboardingAnalysis.after.cancellationRate.toFixed(1)}%
+                  </Badge>
+                </div>
+                <Progress value={100 - analysis.onboardingAnalysis.after.cancellationRate} className="mt-1" />
+                <p className="text-xs text-muted-foreground text-right">
+                  {(100 - analysis.onboardingAnalysis.after.cancellationRate).toFixed(1)}% retention
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Delta Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Onboarding Impact</CardTitle>
+                <CardDescription>Change in cancel rate</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center py-4">
+                  <div className={`text-5xl font-bold ${
+                    analysis.onboardingAnalysis.after.cancellationRate < analysis.onboardingAnalysis.before.cancellationRate
+                      ? 'text-green-600'
+                      : 'text-red-600'
+                  }`}>
+                    {analysis.onboardingAnalysis.after.cancellationRate < analysis.onboardingAnalysis.before.cancellationRate ? '▼' : '▲'}
+                    {Math.abs(analysis.onboardingAnalysis.after.cancellationRate - analysis.onboardingAnalysis.before.cancellationRate).toFixed(1)}%
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {analysis.onboardingAnalysis.after.cancellationRate < analysis.onboardingAnalysis.before.cancellationRate
+                      ? 'lower cancellation rate after onboarding'
+                      : 'higher cancellation rate after onboarding'}
+                  </p>
+                </div>
+                <Separator />
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="flex justify-between">
+                    <span>All public members</span>
+                    <span className="font-semibold text-foreground">{analysis.onboardingAnalysis.overall.total}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Overall cancel rate</span>
+                    <span className="font-semibold text-foreground">{analysis.onboardingAnalysis.overall.cancellationRate.toFixed(1)}%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Monthly Bar Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Cancellation Rate — Public Members</CardTitle>
+              <CardDescription>
+                Each bar is the % of that month&apos;s new public members who have since canceled.
+                <span className="ml-2 inline-flex items-center gap-1">
+                  <span className="inline-block w-3 h-3 rounded-sm bg-slate-400" /> Before onboarding
+                  <span className="inline-block w-3 h-3 rounded-sm bg-emerald-500 ml-2" /> After onboarding (Feb 18, 2026+)
+                </span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[380px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={analysis.onboardingAnalysis.monthlyBreakdown}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" angle={-30} textAnchor="end" height={50} />
+                    <YAxis unit="%" domain={[0, 100]} />
+                    <Tooltip
+                      formatter={(value: number, name: string) => [
+                        name === 'cancellationRate' ? `${value.toFixed(1)}%` : value,
+                        name === 'cancellationRate' ? 'Cancel Rate' : name === 'joined' ? 'Joined' : 'Canceled'
+                      ]}
+                    />
+                    <Legend />
+                    <Bar
+                      dataKey="cancellationRate"
+                      name="Cancel Rate"
+                      radius={[4, 4, 0, 0]}
+                    >
+                      {analysis.onboardingAnalysis.monthlyBreakdown.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.isAfterOnboarding ? '#10b981' : '#94a3b8'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Volume + Cancellations stacked chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Public Member Joins &amp; Cancellations</CardTitle>
+              <CardDescription>Raw counts — how many joined and how many of those have since canceled</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={analysis.onboardingAnalysis.monthlyBreakdown}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" angle={-30} textAnchor="end" height={50} />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" unit="%" />
+                    <Tooltip />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="joined" name="Joined" fill="#3b82f6" barSize={18} radius={[4,4,0,0]} />
+                    <Bar yAxisId="left" dataKey="canceled" name="Canceled" fill="#ef4444" barSize={18} radius={[4,4,0,0]} />
+                    <Line yAxisId="right" type="monotone" dataKey="cancellationRate" name="Cancel Rate" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Data Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Breakdown — Public Members</CardTitle>
+              <CardDescription>Detailed view of public member cohorts by join month</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="relative overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs uppercase bg-muted">
+                    <tr>
+                      <th className="px-4 py-3">Month</th>
+                      <th className="px-4 py-3">Joined</th>
+                      <th className="px-4 py-3">Active</th>
+                      <th className="px-4 py-3">Canceled</th>
+                      <th className="px-4 py-3">Cancel Rate</th>
+                      <th className="px-4 py-3">Onboarding</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analysis.onboardingAnalysis.monthlyBreakdown.map((row) => (
+                      <tr key={row.month} className={`border-b ${
+                        row.isAfterOnboarding ? 'bg-emerald-50/40 dark:bg-emerald-950/20' : ''
+                      }`}>
+                        <td className="px-4 py-3 font-medium">{row.month}</td>
+                        <td className="px-4 py-3">{row.joined}</td>
+                        <td className="px-4 py-3 text-green-600 font-semibold">{row.active}</td>
+                        <td className="px-4 py-3 text-red-600 font-semibold">{row.canceled}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant={row.cancellationRate > 30 ? 'destructive' : 'secondary'}>
+                            {row.cancellationRate.toFixed(1)}%
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          {row.isAfterOnboarding ? (
+                            <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">✉️ With emails</Badge>
+                          ) : (
+                            <Badge variant="outline">No emails</Badge>
+                          )}
                         </td>
                       </tr>
                     ))}

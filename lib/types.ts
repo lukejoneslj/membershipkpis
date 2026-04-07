@@ -8,6 +8,7 @@ export interface AccountRecord {
   'Join Date': string;
   'Renewal Date': string;
   'Billing Method': string;
+  'ATNS Public': string;
 }
 
 export interface FinancialRecord {
@@ -100,6 +101,41 @@ export interface AnalysisResult {
   memberSources: {
     fromJotform: number;
     notFromJotform: number;
+  };
+
+  // Onboarding Email Analysis (Public members only, split Feb 18 2026)
+  onboardingAnalysis: {
+    onboardingStartDate: string;
+    // Before onboarding emails
+    before: {
+      total: number;
+      canceled: number;
+      active: number;
+      cancellationRate: number;
+    };
+    // After onboarding emails started
+    after: {
+      total: number;
+      canceled: number;
+      active: number;
+      cancellationRate: number;
+    };
+    // All public members combined
+    overall: {
+      total: number;
+      canceled: number;
+      active: number;
+      cancellationRate: number;
+    };
+    // Monthly breakdown for public members
+    monthlyBreakdown: Array<{
+      month: string;
+      joined: number;
+      canceled: number;
+      active: number;
+      cancellationRate: number;
+      isAfterOnboarding: boolean;
+    }>;
   };
 }
 

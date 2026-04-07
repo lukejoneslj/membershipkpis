@@ -310,6 +310,89 @@ export function analyzeData(
     }))
     .filter(item => item.month >= '2025-04')
     .sort((a, b) => a.month.localeCompare(b.month));
+  // ── Onboarding Email Analysis ─────────────────────────────────────────────
+  // Onboarding emails started Feb 18, 2026 for ATNS Public members ($5.50/mo).
+  // We compare cancellation rates for public members who joined before vs after
+  // that date to measure the impact of the email sequence.
+  const ONBOARDING_START = new Date('2026-02-18');
+  const ONBOARDING_START_STR = 'Feb 18, 2026';
+
+  const publicMembers = accountsData.filter(
+    acc => acc['ATNS Public']?.trim() === 'ATNS Public'
+  );
+
+  const parseJoinDate = (s: string): Date | null => {
+    try {
+      const d = parse(s.trim(), 'MMM d, yyyy', new Date());
+      return isNaN(d.getTime()) ? null : d;
+    } catch {
+      return null;
+    }
+  };
+
+  const publicBefore = publicMembers.filter(acc => {
+    const d = parseJoinDate(acc['Join Date'] ?? '');
+    return d !== null && d < ONBOARDING_START;
+  });
+
+  const publicAfter = publicMembers.filter(acc => {
+    const d = parseJoinDate(acc['Join Date'] ?? '');
+    return d !== null && d >= ONBOARDING_START;
+  });
+
+  const beforeCanceled = publicBefore.filter(isCanceled).length;
+  const afterCanceled = publicAfter.filter(isCanceled).length;
+  const overallCanceled = publicMembers.filter(isCanceled).length;
+
+  // Monthly breakdown for public members
+  const publicMonthlyMap = new Map<string, { joined: number; canceled: number }>();
+  publicMembers.forEach(acc => {
+    const d = parseJoinDate(acc['Join Date'] ?? '');
+    if (!d) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!publicMonthlyMap.has(key)) publicMonthlyMap.set(key, { joined: 0, canceled: 0 });
+    const entry = publicMonthlyMap.get(key)!;
+    entry.joined++;
+    if (isCanceled(acc)) entry.canceled++;
+  });
+
+  const onboardingMonthlyBreakdown = Array.from(publicMonthlyMap.entries())
+    .map(([month, data]) => {
+      const monthDate = new Date(`${month}-01`);
+      return {
+        month,
+        joined: data.joined,
+        canceled: data.canceled,
+        active: data.joined - data.canceled,
+        cancellationRate: data.joined > 0 ? (data.canceled / data.joined) * 100 : 0,
+        isAfterOnboarding: monthDate >= new Date('2026-02-01'),
+      };
+    })
+    .sort((a, b) => a.month.localeCompare(b.month));
+
+  const onboardingAnalysis = {
+    onboardingStartDate: ONBOARDING_START_STR,
+    before: {
+      total: publicBefore.length,
+      canceled: beforeCanceled,
+      active: publicBefore.length - beforeCanceled,
+      cancellationRate: publicBefore.length > 0 ? (beforeCanceled / publicBefore.length) * 100 : 0,
+    },
+    after: {
+      total: publicAfter.length,
+      canceled: afterCanceled,
+      active: publicAfter.length - afterCanceled,
+      cancellationRate: publicAfter.length > 0 ? (afterCanceled / publicAfter.length) * 100 : 0,
+    },
+    overall: {
+      total: publicMembers.length,
+      canceled: overallCanceled,
+      active: publicMembers.length - overallCanceled,
+      cancellationRate: publicMembers.length > 0 ? (overallCanceled / publicMembers.length) * 100 : 0,
+    },
+    monthlyBreakdown: onboardingMonthlyBreakdown,
+  };
+
   return {
     totalMembers,
     activeMembers,
@@ -368,6 +451,8 @@ export function analyzeData(
       fromJotform: convertedToMembers,
       notFromJotform: totalMembers - convertedToMembers,
     },
+
+    onboardingAnalysis,
   };
 }
 
