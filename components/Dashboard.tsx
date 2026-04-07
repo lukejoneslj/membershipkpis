@@ -112,12 +112,11 @@ export function Dashboard({ analysis }: DashboardProps) {
 
       {/* Main Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="pipeline">Jotform Pipeline</TabsTrigger>
           <TabsTrigger value="free-trial">Free Trial</TabsTrigger>
           <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -975,132 +974,6 @@ export function Dashboard({ analysis }: DashboardProps) {
           </Card>
         </TabsContent>
 
-        {/* Insights Tab */}
-        <TabsContent value="insights" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
-                Key Insights & Recommendations
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Quiz Conversion */}
-              <div className="space-y-2">
-                <h3 className="font-semibold flex items-center gap-2">
-                  {analysis.jotformPipeline.conversionRate < 5 ? (
-                    <TrendingDown className="w-4 h-4 text-red-500" />
-                  ) : (
-                    <TrendingUp className="w-4 h-4 text-green-500" />
-                  )}
-                  Quiz to Member Conversion ({analysis.jotformPipeline.conversionRate.toFixed(1)}%)
-                </h3>
-                <div className="text-sm text-muted-foreground">
-                  {analysis.jotformPipeline.conversionRate < 5 ? (
-                    <>
-                      <p>Your conversion rate is below 5%, which suggests room for improvement. Consider:</p>
-                      <ul className="list-disc list-inside mt-2 space-y-1">
-                        <li>Improving quiz result personalization</li>
-                        <li>Adding stronger calls-to-action after quiz completion</li>
-                        <li>Implementing email nurture sequences for quiz takers</li>
-                        <li>Offering time-limited incentives for joining</li>
-                      </ul>
-                    </>
-                  ) : (
-                    <p>Your conversion rate is performing well! Continue optimizing to reach 7-10%.</p>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Free Trial Strategy */}
-              <div className="space-y-2">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <Target className="w-4 h-4 text-blue-500" />
-                  Free Trial Strategy
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {analysis.jotformPipeline.freeTrialRate.toFixed(1)}% of Jotform members use the free trial.
-                  {analysis.jotformPipeline.freeTrialRate < 30 ? (
-                    <> This is relatively low - consider promoting the free trial more prominently in your marketing.</>
-                  ) : (
-                    <> This shows good awareness of the free trial offer.</>
-                  )}
-                </p>
-                <div className="bg-muted p-4 rounded-lg mt-2">
-                  <p className="text-sm font-medium">Free Trial Performance:</p>
-                  <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-muted-foreground">
-                    <li>{analysis.jotformPipeline.freeTrialActive} users still active ({((analysis.jotformPipeline.freeTrialActive / analysis.jotformPipeline.freeTrialUsers) * 100).toFixed(1)}% retention)</li>
-                    <li>Average {analysis.freePromoStats.avgUsersPerDay.toFixed(2)} new free trial users per day</li>
-                    <li>{analysis.freePromoStats.usagePeriodDays} days of usage data available</li>
-                  </ul>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Retention Concerns */}
-              <div className="space-y-2">
-                <h3 className="font-semibold flex items-center gap-2">
-                  {analysis.jotformPipeline.freeTrialCancellationRate > 40 ? (
-                    <AlertTriangle className="w-4 h-4 text-orange-500" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  )}
-                  Retention Analysis
-                </h3>
-                <div className="text-sm text-muted-foreground">
-                  <p>
-                    {analysis.jotformPipeline.freeTrialCancellationRate.toFixed(1)}% of free trial users from Jotform have canceled.
-                    {analysis.jotformPipeline.freeTrialCancellationRate <= 40 && ' This shows good retention!'}
-                  </p>
-                  {analysis.jotformPipeline.freeTrialCancellationRate > 40 && (
-                    <>
-                      <p className="mt-2">This is concerning and suggests issues with:</p>
-                      <ul className="list-disc list-inside mt-2 space-y-1">
-                        <li>Onboarding experience - are users getting value quickly?</li>
-                        <li>Product-market fit - does your service meet their expectations?</li>
-                        <li>Pricing strategy - is the transition from free to paid too abrupt?</li>
-                        <li>Support and engagement - are you nurturing free trial users effectively?</li>
-                      </ul>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Action Items */}
-              <div className="space-y-2">
-                <h3 className="font-semibold">Recommended Actions</h3>
-                <div className="space-y-3">
-                  <Alert>
-                    <AlertTitle>Priority 1: Improve Free Trial Retention</AlertTitle>
-                    <AlertDescription>
-                      Focus on reducing the {analysis.jotformPipeline.freeTrialCancellationRate.toFixed(1)}% cancellation rate
-                      by implementing better onboarding and value demonstration during the trial period.
-                    </AlertDescription>
-                  </Alert>
-                  <Alert>
-                    <AlertTitle>Priority 2: Optimize Quiz Funnel</AlertTitle>
-                    <AlertDescription>
-                      With only {analysis.jotformPipeline.conversionRate.toFixed(1)}% converting from quiz to member,
-                      test different post-quiz nurture sequences and offers to improve conversion.
-                    </AlertDescription>
-                  </Alert>
-                  <Alert>
-                    <AlertTitle>Priority 3: Leverage Success Stories</AlertTitle>
-                    <AlertDescription>
-                      You have {analysis.memberSources.notFromJotform} members who didn&apos;t come through Jotform.
-                      Understand what channels are working and double down on those strategies.
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
