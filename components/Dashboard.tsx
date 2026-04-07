@@ -86,28 +86,8 @@ export function Dashboard({ analysis }: DashboardProps) {
       <div>
         <h1 className="text-4xl font-bold tracking-tight">Membership Analytics Dashboard</h1>
         <p className="text-muted-foreground mt-2">
-          Comprehensive analysis of your marketing and sales pipeline
+          Comprehensive analysis of our marketing and sales pipeline
         </p>
-      </div>
-
-      {/* Key Insights Alerts */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Conversion Rate</AlertTitle>
-          <AlertDescription>
-            {analysis.jotformPipeline.conversionRate.toFixed(1)}% of quiz takers become members.
-            {analysis.jotformPipeline.conversionRate < 5 && ' Consider optimizing your quiz-to-member funnel.'}
-          </AlertDescription>
-        </Alert>
-        <Alert variant={analysis.jotformPipeline.freeTrialCancellationRate > 40 ? 'destructive' : 'default'}>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Free Trial Retention</AlertTitle>
-          <AlertDescription>
-            {analysis.jotformPipeline.freeTrialCancellationRate.toFixed(1)}% of free trial users cancel.
-            {analysis.jotformPipeline.freeTrialCancellationRate > 40 && ' Focus on improving onboarding and value demonstration.'}
-          </AlertDescription>
-        </Alert>
       </div>
 
       {/* Main Tabs */}
