@@ -18,6 +18,19 @@ export async function parseCSVFile<T>(file: File): Promise<T[]> {
   });
 }
 
+/**
+ * Returns true if an account record represents a cancelled member.
+ * MembershipWorks used to set Cancel = 'Cancel'. Starting in January 2026
+ * they stopped updating that column and instead set Billing Method = 'Cancelled'.
+ * We check both so that data from any time period is handled correctly.
+ */
+function isCanceled(acc: AccountRecord): boolean {
+  return (
+    acc.Cancel?.trim() === 'Cancel' ||
+    acc['Billing Method']?.trim() === 'Cancelled'
+  );
+}
+
 export function analyzeData(
   accountsData: AccountRecord[],
   financialData: FinancialRecord[],
@@ -25,7 +38,7 @@ export function analyzeData(
 ): AnalysisResult {
   // Overall Member Stats
   const totalMembers = accountsData.length;
-  const canceledMembers = accountsData.filter(acc => acc.Cancel?.trim() === 'Cancel').length;
+  const canceledMembers = accountsData.filter(isCanceled).length;
   const activeMembers = totalMembers - canceledMembers;
   const cancellationRate = totalMembers > 0 ? (canceledMembers / totalMembers) * 100 : 0;
 
@@ -96,7 +109,7 @@ export function analyzeData(
       // Calculate how many users from this month's cohort have canceled
       const canceledUsersCount = Array.from(data.users).filter(userId => {
         const account = accountsData.find(acc => acc['Account ID']?.trim() === userId);
-        return account?.Cancel?.trim() === 'Cancel';
+        return account ? isCanceled(account) : false;
       }).length;
 
       return {
@@ -110,7 +123,7 @@ export function analyzeData(
 
   // Check cancellation status for free promo users
   const freePromoCanceled = accountsData.filter(
-    acc => freePromoAccountIds.has(acc['Account ID']?.trim()) && acc.Cancel?.trim() === 'Cancel'
+    acc => freePromoAccountIds.has(acc['Account ID']?.trim()) && isCanceled(acc)
   ).length;
   const freePromoActive = freePromoAccountIds.size - freePromoCanceled;
   const freePromoCancellationRate = freePromoAccountIds.size > 0
@@ -212,7 +225,7 @@ export function analyzeData(
   // Calculate gross vs net for before free trial
   const canceledBeforeFreeTrial = accountsData.filter(
     acc => Array.from(jotformMemberAccountIdsBeforeFreeTrial).includes(acc['Account ID']?.trim()) &&
-      acc.Cancel?.trim() === 'Cancel'
+      isCanceled(acc)
   ).length;
   const activeBeforeFreeTrial = convertedBeforeFreeTrial - canceledBeforeFreeTrial;
   const cancellationRateBeforeFreeTrial = convertedBeforeFreeTrial > 0
@@ -234,7 +247,7 @@ export function analyzeData(
   // Check cancellation for Jotform free trial users
   const jotformFreeTrialCanceled = accountsData.filter(
     acc => jotformFreeTrialUsers.includes(acc['Account ID']?.trim()) &&
-      acc.Cancel?.trim() === 'Cancel'
+      isCanceled(acc)
   ).length;
   const jotformFreeTrialActive = jotformFreeTrialUsers.length - jotformFreeTrialCanceled;
   const jotformFreeTrialCancellationRate = jotformFreeTrialUsers.length > 0
@@ -244,7 +257,7 @@ export function analyzeData(
   // Calculate gross vs net for SINCE free trial (all conversions, not just free trial users)
   const canceledSinceFreeTrial = accountsData.filter(
     acc => Array.from(jotformMemberAccountIdsSinceFreeTrial).includes(acc['Account ID']?.trim()) &&
-      acc.Cancel?.trim() === 'Cancel'
+      isCanceled(acc)
   ).length;
   const activeSinceFreeTrial = convertedToMembersSinceFreeTrial - canceledSinceFreeTrial;
   const cancellationRateSinceFreeTrial = convertedToMembersSinceFreeTrial > 0
