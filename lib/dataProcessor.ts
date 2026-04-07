@@ -311,14 +311,17 @@ export function analyzeData(
     .filter(item => item.month >= '2025-04')
     .sort((a, b) => a.month.localeCompare(b.month));
   // ── Onboarding Email Analysis ─────────────────────────────────────────────
-  // Onboarding emails started Feb 18, 2026 for ATNS Public members ($5.50/mo).
-  // We compare cancellation rates for public members who joined before vs after
-  // that date to measure the impact of the email sequence.
+  // Onboarding emails started Feb 18, 2026 for ATNS Public members ($5.50/mo)
+  // who used the free trial. We narrow to Public + free-trial members so the
+  // comparison reflects the exact cohort receiving the email sequence.
   const ONBOARDING_START = new Date('2026-02-18');
   const ONBOARDING_START_STR = 'Feb 18, 2026';
 
-  const publicMembers = accountsData.filter(
-    acc => acc['ATNS Public']?.trim() === 'ATNS Public'
+  // Public members who also used the free trial — the targeted cohort
+  const publicFreeTrialMembers = accountsData.filter(
+    acc =>
+      acc['ATNS Public']?.trim() === 'ATNS Public' &&
+      freePromoAccountIds.has(acc['Account ID']?.trim())
   );
 
   const parseJoinDate = (s: string): Date | null => {
@@ -330,23 +333,23 @@ export function analyzeData(
     }
   };
 
-  const publicBefore = publicMembers.filter(acc => {
+  const publicBefore = publicFreeTrialMembers.filter(acc => {
     const d = parseJoinDate(acc['Join Date'] ?? '');
     return d !== null && d < ONBOARDING_START;
   });
 
-  const publicAfter = publicMembers.filter(acc => {
+  const publicAfter = publicFreeTrialMembers.filter(acc => {
     const d = parseJoinDate(acc['Join Date'] ?? '');
     return d !== null && d >= ONBOARDING_START;
   });
 
   const beforeCanceled = publicBefore.filter(isCanceled).length;
   const afterCanceled = publicAfter.filter(isCanceled).length;
-  const overallCanceled = publicMembers.filter(isCanceled).length;
+  const overallOnboardingCanceled = publicFreeTrialMembers.filter(isCanceled).length;
 
-  // Monthly breakdown for public members
+  // Monthly breakdown for public free-trial members
   const publicMonthlyMap = new Map<string, { joined: number; canceled: number }>();
-  publicMembers.forEach(acc => {
+  publicFreeTrialMembers.forEach(acc => {
     const d = parseJoinDate(acc['Join Date'] ?? '');
     if (!d) return;
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -385,10 +388,10 @@ export function analyzeData(
       cancellationRate: publicAfter.length > 0 ? (afterCanceled / publicAfter.length) * 100 : 0,
     },
     overall: {
-      total: publicMembers.length,
-      canceled: overallCanceled,
-      active: publicMembers.length - overallCanceled,
-      cancellationRate: publicMembers.length > 0 ? (overallCanceled / publicMembers.length) * 100 : 0,
+      total: publicFreeTrialMembers.length,
+      canceled: overallOnboardingCanceled,
+      active: publicFreeTrialMembers.length - overallOnboardingCanceled,
+      cancellationRate: publicFreeTrialMembers.length > 0 ? (overallOnboardingCanceled / publicFreeTrialMembers.length) * 100 : 0,
     },
     monthlyBreakdown: onboardingMonthlyBreakdown,
   };

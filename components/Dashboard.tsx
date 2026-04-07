@@ -747,11 +747,11 @@ export function Dashboard({ analysis }: DashboardProps) {
         <TabsContent value="onboarding" className="space-y-4">
           <Alert>
             <Mail className="h-4 w-4" />
-            <AlertTitle>Onboarding Email Sequence — Public Members ($5.50/mo)</AlertTitle>
+            <AlertTitle>Onboarding Email Sequence — Public Free-Trial Members ($5.50/mo)</AlertTitle>
             <AlertDescription>
-              On <strong>February 18, 2026</strong>, a new onboarding email sequence launched for
-              ATNS Public members. This tab compares cancellation rates for public members who joined
-              before vs. after that date to measure its effectiveness.
+              On <strong>February 18, 2026</strong>, a new onboarding email sequence launched targeting
+              ATNS Public members who joined via the <strong>free trial</strong>. This tab compares
+              cancellation rates for that specific cohort before vs. after the onboarding emails started.
             </AlertDescription>
           </Alert>
 
