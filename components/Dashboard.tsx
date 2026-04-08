@@ -97,6 +97,7 @@ export function Dashboard({ analysis }: DashboardProps) {
           <TabsTrigger value="pipeline">Jotform Pipeline</TabsTrigger>
           <TabsTrigger value="free-trial">Free Trial</TabsTrigger>
           <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+          <TabsTrigger value="revenue">Revenue</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -949,6 +950,94 @@ export function Dashboard({ analysis }: DashboardProps) {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="revenue" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Potential Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+                  ${analysis.revenueAnalysis.potentialRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  If 0% churn among {analysis.revenueAnalysis.userCount.toLocaleString()} trial users
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Actual Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  ${analysis.revenueAnalysis.actualRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Realized revenue including cancellations
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-amber-200 bg-amber-50/30 dark:border-amber-900/50 dark:bg-amber-950/20">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Lost Potential</CardTitle>
+                <TrendingDown className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">
+                  ${analysis.revenueAnalysis.difference.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Difference due to churn
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue Comparison</CardTitle>
+              <CardDescription>
+                Visualizing the gap between potential revenue (assuming 100% retention) and actual realized revenue for the free trial cohort up to April 8, 2026.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      {
+                        name: 'Revenue',
+                        Actual: analysis.revenueAnalysis.actualRevenue,
+                        Potential: analysis.revenueAnalysis.potentialRevenue,
+                      }
+                    ]}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+                    <XAxis dataKey="name" className="text-sm" />
+                    <YAxis 
+                      className="text-sm"
+                      tickFormatter={(value) => `$${value.toLocaleString()}`}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, undefined]}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--background))' }}
+                    />
+                    <Legend />
+                    <Bar dataKey="Actual" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={100} />
+                    <Bar dataKey="Potential" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={100} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>

@@ -22,6 +22,7 @@ export interface FinancialRecord {
   'Transaction Type': string;
   'Renewal Date Before Transaction': string;
   'Renewal Date After Transaction': string;
+  'Items'?: string;
 }
 
 export interface JotformRecord {
@@ -136,6 +137,14 @@ export interface AnalysisResult {
       cancellationRate: number;
       isAfterOnboarding: boolean;
     }>;
+  };
+
+  // Revenue Analysis for Free Trial Users
+  revenueAnalysis: {
+    potentialRevenue: number;
+    actualRevenue: number;
+    difference: number;
+    userCount: number;
   };
 }
 

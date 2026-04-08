@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { parse, differenceInDays } from 'date-fns';
+import { parse, differenceInDays, differenceInMonths } from 'date-fns';
 import type { AccountRecord, FinancialRecord, JotformRecord, AnalysisResult } from './types';
 
 export async function parseCSVFile<T>(file: File): Promise<T[]> {
@@ -396,6 +396,67 @@ export function analyzeData(
     monthlyBreakdown: onboardingMonthlyBreakdown,
   };
 
+  // ── Revenue Analysis ───────────────────────────────────────────────────────
+  const priceMap = new Map<string, number>();
+  financialData.forEach((tx) => {
+    const type = tx['Transaction Type'];
+    if (type === 'Membership' && parseFloat(tx['Transaction Total'] || '0') > 0) {
+      const item = tx.Items || 'Unknown';
+      const cost = Math.max(
+        parseFloat(tx['Membership Sub-Total'] || '0'),
+        parseFloat(tx['Transaction Total'] || '0')
+      );
+      if (!priceMap.has(item) || priceMap.get(item)! < cost) {
+        priceMap.set(item, cost);
+      }
+    }
+  });
+
+  let potentialRevenue = 0;
+  let actualRevenue = 0;
+  // Evaluate up to April 8, 2026 as per user target
+  const evaluationDate = new Date('2026-04-08');
+
+  freePromoAccountIds.forEach((accId) => {
+    const txs = financialData.filter((x) => x['Account ID']?.trim() === accId);
+
+    // Find initial free transaction
+    const initialTxs = txs.filter((x) => x['Discount Code']?.toLowerCase().trim() === 'free');
+    if (initialTxs.length === 0) return;
+
+    // Sort to get earliest
+    const sortedInit = initialTxs
+      .map((x) => ({ ...x, d: parse(x.Date, 'MMM d, yyyy', new Date()) }))
+      .sort((a, b) => a.d.getTime() - b.d.getTime());
+    const firstFree = sortedInit[0];
+
+    const items = firstFree.Items || 'Unknown';
+    const rate = priceMap.get(items) || 0;
+
+    const joinDate = firstFree.d;
+    // Calculate full months elapsed giving 1 month free (differenceInMonths effectively floors to full months, 
+    // users pay for subsequent months)
+    let monthsElapsed = differenceInMonths(evaluationDate, joinDate);
+    if (monthsElapsed < 0) monthsElapsed = 0;
+
+    potentialRevenue += monthsElapsed * rate;
+
+    // Sum all paid memberships for this user
+    txs.forEach((t) => {
+      if (parseFloat(t['Transaction Total'] || '0') > 0 && t['Transaction Type'] === 'Membership') {
+        const cost = parseFloat(t['Transaction Total'] || '0');
+        actualRevenue += cost;
+      }
+    });
+  });
+
+  const revenueAnalysis = {
+    potentialRevenue,
+    actualRevenue,
+    difference: potentialRevenue - actualRevenue,
+    userCount: freePromoAccountIds.size,
+  };
+
   return {
     totalMembers,
     activeMembers,
@@ -456,6 +517,7 @@ export function analyzeData(
     },
 
     onboardingAnalysis,
+    revenueAnalysis,
   };
 }
 
