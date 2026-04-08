@@ -431,7 +431,13 @@ export function analyzeData(
     const firstFree = sortedInit[0];
 
     const items = firstFree.Items || 'Unknown';
-    const rate = priceMap.get(items) || 0;
+    const cleanedItems = items.replace(/,\s*Discount code:.*$/i, '').trim();
+    let rate = priceMap.get(cleanedItems) || priceMap.get(items) || 0;
+
+    // Fallback: if we still don't have a rate (or evaluating $0 rate) and it looks like a public membership
+    if (rate === 0 && cleanedItems.includes('ATNS Public')) {
+      rate = 5.51; // general fallback cost observed in data
+    }
 
     const joinDate = firstFree.d;
     // Calculate full months elapsed giving 1 month free (differenceInMonths effectively floors to full months, 

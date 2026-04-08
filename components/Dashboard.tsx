@@ -92,7 +92,7 @@ export function Dashboard({ analysis }: DashboardProps) {
 
       {/* Main Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="pipeline">Jotform Pipeline</TabsTrigger>
           <TabsTrigger value="free-trial">Free Trial</TabsTrigger>
