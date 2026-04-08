@@ -414,6 +414,7 @@ export function analyzeData(
 
   let potentialRevenue = 0;
   let actualRevenue = 0;
+  let maxMonthlyRevenue = 0;
   // Evaluate up to April 8, 2026 as per user target
   const evaluationDate = new Date('2026-04-08');
 
@@ -438,6 +439,7 @@ export function analyzeData(
     if (rate === 0 && cleanedItems.includes('ATNS Public')) {
       rate = 5.51; // general fallback cost observed in data
     }
+    maxMonthlyRevenue += rate;
 
     const joinDate = firstFree.d;
     // Calculate full months elapsed giving 1 month free (differenceInMonths effectively floors to full months, 
@@ -456,11 +458,38 @@ export function analyzeData(
     });
   });
 
+  const year1Perfect = maxMonthlyRevenue * 11;
+  const currentChurnRate = freePromoCancellationRate / 100; // it's a percentage (e.g. 50 meaning 50%)
+  const year1Current = year1Perfect * (1 - currentChurnRate);
+
+  const simulations: Array<{ label: string; cancellationRate: number; projectedRevenue: number }> = [];
+  const testRates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90].filter(r => Math.abs(r - freePromoCancellationRate) > 1);
+  testRates.push(freePromoCancellationRate);
+  testRates.sort((a, b) => a - b); // Ensure monotonically increasing
+
+  testRates.forEach(cr => {
+    let label = `${cr.toFixed(0)}% Churn`;
+    if (cr === 0) label = "0% Churn (Perfect)";
+    if (cr === freePromoCancellationRate) label = `Current (${cr.toFixed(1)}%)`;
+
+    simulations.push({
+      label,
+      cancellationRate: cr,
+      projectedRevenue: year1Perfect * (1 - (cr / 100)),
+    });
+  });
+
   const revenueAnalysis = {
     potentialRevenue,
     actualRevenue,
     difference: potentialRevenue - actualRevenue,
     userCount: freePromoAccountIds.size,
+    projections: {
+      maxMonthlyRevenue,
+      year1Perfect,
+      year1Current,
+      simulations,
+    }
   };
 
   return {

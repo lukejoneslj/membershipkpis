@@ -145,6 +145,16 @@ export interface AnalysisResult {
     actualRevenue: number;
     difference: number;
     userCount: number;
+    projections: {
+      maxMonthlyRevenue: number;
+      year1Perfect: number;
+      year1Current: number;
+      simulations: Array<{
+        label: string;
+        cancellationRate: number;
+        projectedRevenue: number;
+      }>;
+    };
   };
 }
 

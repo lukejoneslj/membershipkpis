@@ -21,7 +21,7 @@ import {
   Mail,
 } from 'lucide-react';
 import type { AnalysisResult } from '@/lib/types';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart } from 'recharts';
+import { BarChart, Bar, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart } from 'recharts';
 import { FunnelChart } from './FunnelChart';
 
 interface DashboardProps {
@@ -1037,6 +1037,66 @@ export function Dashboard({ analysis }: DashboardProps) {
                     <Bar dataKey="Actual" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={100} />
                     <Bar dataKey="Potential" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={100} />
                   </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row justify-between items-start">
+              <div>
+                <CardTitle>1-Year Cohort Projections</CardTitle>
+                <CardDescription>
+                  Projecting 12-month revenue (11 paid months) for the {analysis.revenueAnalysis.userCount.toLocaleString()} trial users under various cancellation scenarios.
+                </CardDescription>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-semibold text-muted-foreground">Current Projected Year 1</div>
+                <div className="text-2xl font-bold text-primary">
+                  ${analysis.revenueAnalysis.projections.year1Current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px] w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={analysis.revenueAnalysis.projections.simulations}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                  >
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" vertical={false} />
+                    <XAxis 
+                      dataKey="label" 
+                      className="text-xs" 
+                      tick={{ fill: 'currentColor', opacity: 0.7 }}
+                      tickMargin={10}
+                    />
+                    <YAxis 
+                      className="text-xs"
+                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      tick={{ fill: 'currentColor', opacity: 0.7 }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Projected Revenue']}
+                      labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold', marginBottom: '8px' }}
+                      contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--background))', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="projectedRevenue" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorRevenue)" 
+                      activeDot={{ r: 6, strokeWidth: 0, fill: 'hsl(var(--primary))' }}
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
